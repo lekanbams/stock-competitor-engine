@@ -70,7 +70,7 @@ If (Check Not Duplicate) → Stop or Retry
 
 ### Step 1: Import the Workflow
 
-1. Download `Stock_Competitor_Engine_Simplified.json` from this repository
+1. Download `Stock_Competitor_Engine.json` from this repository
 2. Open your n8n instance
 3. Click **Workflows** → **Import from File**
 4. Select the downloaded JSON file
