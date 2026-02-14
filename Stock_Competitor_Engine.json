@@ -1,0 +1,389 @@
+{
+  "name": "Real Time Stock Competitor Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2,
+              "triggerAtMinute": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -832,
+        320
+      ],
+      "id": "602149a4-e977-4b66-ab2e-105d8a977532",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "## Stocks\n**Double click** to edit me. [Guide](https://docs.n8n.io/workflows/sticky-notes/)",
+        "height": 560,
+        "width": 2096,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        128
+      ],
+      "id": "b51e7db8-4b25-4abc-b6e3-2c0095dff925",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        480
+      ],
+      "id": "77c1a90b-cdc1-4d00-b86c-cebf357e5cad",
+      "name": "Do nothing 01"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3fff3038-b1f5-4109-adf1-5ce470211289",
+              "leftValue": "={{ $json.labelIds[0] }}",
+              "rightValue": "SENT",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        320
+      ],
+      "id": "c77827e0-d421-475b-8818-133f63314610",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        304
+      ],
+      "id": "0d3fe199-1849-4eb4-a60b-058226a8f3b8",
+      "name": "Stop"
+    },
+    {
+      "parameters": {
+        "url": "https://api.twelvedata.com/quote?symbol=EOSE,GLXY,OPEN,TSLA,FNMA&interval=4h&apikey=YOUR_TWELVEDATA_API_KEY",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -640,
+        320
+      ],
+      "id": "b6f2a58f-13e5-4237-ae7d-97664de5ce28",
+      "name": "Get stock update"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst items = [];\n\n// Convert the response into separate items for each stock\nfor (const symbol in data) {\n  if (data[symbol] && typeof data[symbol] === 'object') {\n    items.push({\n      json: {\n        symbol: symbol,\n        name: data[symbol].name || symbol,\n        percent_change: parseFloat(data[symbol].percent_change),\n        close: parseFloat(data[symbol].close),\n        previous_close: parseFloat(data[symbol].previous_close),\n        open: parseFloat(data[symbol].open),\n        high: parseFloat(data[symbol].high),\n        low: parseFloat(data[symbol].low),\n        volume: data[symbol].volume,\n        raw_data: data[symbol]\n      }\n    });\n  }\n}\n\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        320
+      ],
+      "id": "6a7f9086-bbfb-4d25-959e-d25f42d233af",
+      "name": "Convert values"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aa24dcf5-6f81-45fc-8b72-a3ac15f5988a",
+              "leftValue": "={{ $json.percent_change }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        320
+      ],
+      "id": "42026556-e070-437c-8949-7c6d3e479b6a",
+      "name": "Is % greater than 5 ?1"
+    },
+    {
+      "parameters": {
+        "url": "https://query2.finance.yahoo.com/v1/finance/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.symbol }}"
+            },
+            {
+              "name": "newsCount",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -64,
+        176
+      ],
+      "id": "1b0d5bf7-fdeb-46a0-8142-50c9c725e695",
+      "name": "Fetch news"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an institutional-grade price intelligence analyst providing real-time market insights. \n\nAnalyze the significant price movement for {{ $('Is % greater than 5 ?1').item.json.symbol }} ({{ $('Is % greater than 5 ?1').item.json.name }}), which has increased by {{ $('Is % greater than 5 ?1').item.json.percent_change }}% today.\n\nNEWS SOURCES:\n{{ $json.news.slice(0, 5).map((article, i) => `${i+1}. ${article.title || 'Article'}: ${article.link || article.url}`).join('\\n') }}\n\nANALYSIS REQUIREMENTS:\nProvide a structured analysis following this exact format:\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nEXECUTIVE SUMMARY\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCompany Name & Ticker: {{ $('Is % greater than 5 ?1').item.json.name }}, {{ $('Is % greater than 5 ?1').item.json.symbol }}\n\n% change: {{ $('Is % greater than 5 ?1').item.json.percent_change }}\n\n[Provide a concise 2-3 sentence overview of what drove this price movement]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nPRIMARY CATALYST ANALYSIS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCATALYST #1: [Title]\nCategory: [Company-Specific / Sector-Wide / Market-Wide / Macroeconomic]\nImpact Level: [High / Medium / Low]\n\n[2-3 sentence explanation of this catalyst and why it's significant]\nSource: [Include the relevant news link number from above]\n\n\nCATALYST #2: [Title]\nCategory: [Category]\nImpact Level: [Level]\n\n[Explanation]\nSource: [Link number]\n\n\n[Add more catalysts if applicable, maximum 3]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMARKET CONTEXT\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[1-2 sentences on whether this is an isolated event or part of broader sector/market trends]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nINTELLIGENCE TAKEAWAY\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[Provide a clear, actionable 2-3 sentence conclusion about sustainability of this move and what investors should monitor]\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nREFERENCE LINKS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n{{ $json.news.slice(0, 5).map((article, i) => `${i+1}. ${article.link || article.url}`).join('\\n') }}\n\nTONE & STYLE GUIDELINES:\n- Professional, analytical, and objective\n- Direct and actionable - avoid speculation without basis\n- Use data-driven language (\"indicates\", \"suggests\", \"correlates with\")\n- Avoid sensationalism or emotional language\n- Be concise - institutional investors value brevity\n- If insufficient information from news sources, state this explicitly rather than speculating",
+              "role": "model"
+            },
+            {
+              "content": "Begin your analysis now"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        144,
+        320
+      ],
+      "id": "f6cf9a1a-43c9-480c-a1bf-f40e1ddfb907",
+      "name": "Run analysis",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_GOOGLE_GEMINI_CREDENTIAL_ID",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const analysis = $input.first().json.content.parts[0].text ;\n\n// Ensure proper formatting for email (preserve line breaks)\nconst formattedAnalysis = analysis\n  .replace(/\\n/g, '<br>')  // Convert to HTML breaks for HTML emails\n  // OR keep as plain text with proper spacing:\n  // .replace(/━/g, '─')  // Replace special chars if needed\n\nreturn {\n  json: {\n    symbol: $('Get stock update').item.json.symbol,\n    company: $('Get stock update').item.json.name,\n    change: $('Convert values').item.json.percent_change,\n    analysis_html: analysis.replace(/\\n/g, '<br>'),\n    analysis_plain: analysis,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        320
+      ],
+      "id": "d53df378-eb01-4e04-b1d5-ac2d383dc178",
+      "name": "Parse output"
+    },
+    {
+      "parameters": {
+        "sendTo": "your-email@example.com",
+        "subject": "Stock Update",
+        "message": "={{ $json.analysis_html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        640,
+        320
+      ],
+      "id": "234a11d6-b564-4a12-b15a-947c7068bc1c",
+      "name": "Send update",
+      "webhookId": "9e3bc720-2df3-4023-876f-dfd9da3e1fb8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_OAUTH2_CREDENTIAL_ID",
+          "name": "Gmail OAuth2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get stock update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Stop",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get stock update": {
+      "main": [
+        [
+          {
+            "node": "Convert values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert values": {
+      "main": [
+        [
+          {
+            "node": "Is % greater than 5 ?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is % greater than 5 ?1": {
+      "main": [
+        [
+          {
+            "node": "Fetch news",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Do nothing 01",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch news": {
+      "main": [
+        [
+          {
+            "node": "Run analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse output": {
+      "main": [
+        [
+          {
+            "node": "Send update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send update": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "GENERATED_ON_IMPORT",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
+  },
+  "id": "GENERATED_ON_IMPORT",
+  "tags": []
+}
