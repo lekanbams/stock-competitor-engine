@@ -1,4 +1,4 @@
-# Real-Time Stock Competitor Engine (Simplified)
+# Real-Time Stock Competitor Engine
 
 An automated n8n workflow that monitors multiple stock tickers for significant price movements (≥5% change) and delivers AI-powered institutional-grade market analysis via email every 2 hours. This is a streamlined, single-path version optimized for clarity and ease of maintenance.
 
