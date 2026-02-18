@@ -239,13 +239,11 @@ This creates dynamic subjects like: "🚨 Stock Alert: TSLA up 7.3%"
 
 ## 📊 Sample Output
 
-See the `/screenshots` folder for examples of:
+See the `image.png` file for examples of:
 - n8n workflow canvas
 - Email notification received
 - AI analysis report sample
 - Stock data formatting
-
-*(Add your screenshots to the `/screenshots` folder after setup)*
 
 ## 📈 Understanding the Data
 
